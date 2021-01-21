@@ -1,9 +1,9 @@
-"""Aggregation Flatter in execution mode."""
+"""Aggregation Flatten in standalone mode."""
 import sys
 import configparser
 
-from aggregation_flatter import AggregationFlatter
-from aggregation_flatter.utils import execute_query, read_as_json
+from aggregation_flatten import AggregationFlatten
+from aggregation_flatten.utils import execute_query, read_as_json
 
 
 CONFIG = configparser.ConfigParser()
@@ -26,14 +26,13 @@ else:
 
 # Process both query and response in order
 # to flat the results of the aggregation.
-result = AggregationFlatter(
+result = AggregationFlatten(
     query,
     response,
     flat_one_hit = CONFIG.getboolean('misc', 'flat_one_hit', fallback=True),
     plural_hits = CONFIG.getboolean('misc', 'plural_hits', fallback=True),
     remove_keyword = CONFIG.getboolean('misc', 'remove_keyword', fallback=True),
-    output_mode = CONFIG.get('misc', 'output_mode', fallback='json')
-).render()
+).render(CONFIG.get('misc', 'output_mode', fallback='json'))
 
 sys.stdout.write(result)
 sys.exit(0)

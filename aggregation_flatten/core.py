@@ -1,4 +1,4 @@
-"""elasticsearch-aggregation-flatter"""
+"""core."""
 import json
 import sys
 import uuid
@@ -6,22 +6,18 @@ import uuid
 from .utils import to_csv
 
 
-class AggregationFlatter(object):
+class AggregationFlatten(object):
     """..."""
-    OUTPUT_MODES = ['csv', 'json', 'pretty_json']
+    OUTPUT_MODES = ['json', 'pretty_json', 'csv']
     AGGREGATIONS = ['terms', 'sum', 'avg', 'min', 'max', 'cardinality']
     UNKNOWN_FIELD_PREFIX = 'unknown-field-'
 
-    def __init__(self, query, response, flat_one_hit=True, plural_hits=True, remove_keyword=True, output_mode='json'):
+    def __init__(self, query, response, flat_one_hit=True, plural_hits=True, remove_keyword=True):
         self.query = query
         self.response = response
         self.flat_one_hit = flat_one_hit
         self.plural_hits = plural_hits
         self.remove_keyword = remove_keyword
-        self.output_mode = output_mode
-
-        if self.output_mode not in self.OUTPUT_MODES:
-            raise Exception('Output mode not found.')
 
     def process_field(self, agg_path):
         """Getting the name of the field, based on the original query."""
@@ -111,8 +107,7 @@ class AggregationFlatter(object):
             row['doc_count'] = data['doc_count']
         return row
 
-
-    def render(self):
+    def process_query(self):
         """Consider the first agregation available
         as the main aggregation to be processed."""
         base = list(self.response['aggregations'].keys())[0]
@@ -126,10 +121,16 @@ class AggregationFlatter(object):
             data = self.process_bucket(bucket, base)
             if data:
                 results.append(data)
-        
-        if self.output_mode == 'json':
-            return json.dumps(results)
-        elif self.output_mode == 'pretty_json':
+        return results
+
+    def render(self, output_mode=None):
+        """..."""
+        mode = output_mode if output_mode in self.OUTPUT_MODES else self.OUTPUT_MODES[0]
+        results = self.process_query()
+
+        if mode == 'json':
+            return json.dumps(results, separators=(',', ':'))
+        elif mode == 'pretty_json':
             return json.dumps(results, indent=2)
-        elif self.output_mode == 'csv':
+        else:
             return to_csv(results)
