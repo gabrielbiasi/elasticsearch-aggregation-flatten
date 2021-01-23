@@ -1,11 +1,12 @@
 name: "Release Workflow"
 on:
-  workflow_dispatch:
-
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  release:
+    types: [created]
+  workflow_dispatch:
 
 jobs:
   build-n-publish:
@@ -29,6 +30,7 @@ jobs:
         python3 setup.py sdist
 
     - name: Publish package to Test PyPI
+      if: github.event_name == 'release' && github.event.action == 'created'
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
