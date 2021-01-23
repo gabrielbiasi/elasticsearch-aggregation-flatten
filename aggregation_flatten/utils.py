@@ -1,16 +1,15 @@
 """package utils."""
-import csv
 import json
-
-try:
-    # Python 2
-    from io import StringIO as DummyFile
-except ImportError:
-    # Python 3
-    from io import BytesIO as DummyFile
 
 from elasticsearch.connection import create_ssl_context
 from elasticsearch import Elasticsearch
+
+
+def pluralize(word, override):
+    """Helper to get word in plural form."""
+    if word in override:
+        return override[word]
+    return word + 'es' if word[-1] == 's' else word + 's'
 
 
 def to_csv(data):
@@ -19,18 +18,22 @@ def to_csv(data):
         return ""
 
     # You got a better way to do this section? PR me please.
-    dummy = DummyFile()
-    fieldnames = list(data[0].keys())
-    writer = csv.DictWriter(
-        dummy,
-        fieldnames=fieldnames,
-        quoting=csv.QUOTE_NONNUMERIC,
-        lineterminator='\n'
-    )
-    writer.writeheader()
-    for row in data:
-        writer.writerow(row)
-    return dummy.getvalue()
+    result = str()
+    header = list(data[0].keys())
+    result += '"' + '","'.join(header) + '"\n'
+
+    for element in data:
+        row = str()
+        for key in header:
+            value = element[key]
+            if isinstance(value, int) or isinstance(value, float):
+                row += '{},'.format(value)
+            elif isinstance(value, list):
+                row += '"' + ','.join(value) + '",'
+            else:
+                row += '"{}",'.format(value)
+        result += row[:-1] + '\n'
+    return result
 
 
 def read_as_json(filename):

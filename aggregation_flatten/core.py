@@ -1,9 +1,13 @@
 """core."""
 import json
+import pytz
 import sys
 import uuid
 
-from .utils import to_csv
+from datetime import datetime
+from .utils import pluralize, to_csv
+
+ISO8601 = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 class AggregationFlatten(object):
@@ -12,12 +16,30 @@ class AggregationFlatten(object):
     AGGREGATIONS = ['terms', 'sum', 'avg', 'min', 'max', 'cardinality']
     UNKNOWN_FIELD_PREFIX = 'unknown-field-'
 
-    def __init__(self, query, response, flat_one_hit=True, plural_hits=True, remove_keyword=True):
+    def __init__(self, query, response, flat_top_hits=True, plural_top_hits=True, plurals=None, date_format=None, timezone=None, remove_keyword=True):
         self.query = query
         self.response = response
-        self.flat_one_hit = flat_one_hit
-        self.plural_hits = plural_hits
+        self.flat_top_hits = flat_top_hits
+        self.plural_top_hits = plural_top_hits
+        self.plurals = plurals or dict()
+        self.date_format = date_format
+        self.timezone = timezone
         self.remove_keyword = remove_keyword
+
+    def process_date(self, value):
+        """Helper to sanitize date values."""
+        if not isinstance(value, str):
+            return value
+        try:
+            date = datetime.strptime(value, ISO8601)
+            if self.timezone:
+                date = (date
+                        .replace(tzinfo=pytz.utc)
+                        .astimezone(pytz.timezone(self.timezone)))
+            value = date.strftime(self.date_format or ISO8601)
+        except ValueError:
+            pass
+        return value
 
     def process_field(self, agg_path):
         """Getting the name of the field, based on the original query."""
@@ -26,57 +48,54 @@ class AggregationFlatten(object):
             current_path = current_path['aggs'][agg]
 
         if 'top_hits' in current_path:
-            return current_path['top_hits']['_source']
+            return current_path['top_hits']['_source'], current_path['top_hits']['size']
 
         # Common aggregation formats
         for agg_type in self.AGGREGATIONS:
             if agg_type in current_path:
-                return current_path[agg_type]['field']
+                return current_path[agg_type]['field'], 0
 
         # Fallback to a default field name
         return self.UNKNOWN_FIELD_PREFIX + str(uuid.uuid4())[:8]
 
     def process_data(self, subdata, agg_path):
         """Normalize the data of the bucket."""
-        item = {}
-        for key, value in subdata.items():
-            field_name = self.process_field(agg_path)
-            if key in ['key', 'value']:  # count, avg, max, min, sum, terms
-                item[field_name] = value
-            elif key == 'hits':  # top hits
-                item[field_name] = []
-                for hits in value['hits']:
-                    if 'fields' in hits:  # keyword field
-                        item[field_name].append(hits['fields'][field_name][0])
-                    else:  # text field
-                        item[field_name].append(hits['_source'][field_name])
+        field_name, size = self.process_field(agg_path)
 
-                # Flat result when top hits return only one hit.
-                if self.flat_one_hit and len(item[field_name]) == 1:
-                    item[field_name] = item[field_name][0]
+        if 'hits' in subdata.keys():  # top hits
+            data = []
+            for hits in subdata['hits']['hits']:
+                if 'fields' in hits:  # keyword field
+                    raw = hits['fields'][field_name][0]
+                else:  # text field
+                    raw = hits['_source'][field_name]
+                data.append(self.process_date(raw))
 
-                # If multiple hits, append a 's' to avoid mapping issues.
-                elif self.plural_hits:
-                    temp = item.pop(field_name)
-                    field_name += 's'
-                    item[field_name] = temp
+            if self.flat_top_hits and size == 1 and len(data) == 1:
+                data = data[0]
+            elif self.plural_top_hits and size > 1:
+                field_name = pluralize(field_name, self.plurals)
 
-            # Remove ".keyword" from field name, if needed.
-            if self.remove_keyword and field_name in item and '.keyword' in field_name:
-                temp = item.pop(field_name)
-                field_name = field_name.replace('.keyword', '')
-                item[field_name] = temp
+        else:  # count, avg, max, min, sum, terms
+            for common in ['value_as_string', 'key', 'value']:
+                if common in subdata.keys():
+                    data = self.process_date(subdata[common])
+                    break
 
-        return item
+        # Remove ".keyword" from field name, if needed.
+        if self.remove_keyword and '.keyword' in field_name:
+            field_name = field_name.replace('.keyword', '')
+
+        return {field_name: data}
 
     def process_bucket(self, data, agg_path):
         """Here the magic happens.
         This recursive function checks for any numeric keys in the current dict
         (because Kibana does that).
-        For every new inner bucket found, we recursively process it, and after that
-        we look for specific data fields, using 'process_data'. We only consider to
-        process the current bucket if any data was found in the inner buckets.
-        We also preserve the counter of the deepest bucket."""
+        For every new inner bucket found, we recursively process it, and after
+        that we look for specific data fields, using 'process_data'. We only
+        consider to process the current bucket if any data was found in the
+        inner buckets. We also preserve the counter of the deepest bucket."""
         row = {}
         # Processing the data within inner buckets.
         children_aggregations = [key for key in data.keys() if key.isnumeric()]

@@ -1,4 +1,5 @@
 """Aggregation Flatten in standalone mode."""
+import json
 import sys
 import configparser
 
@@ -29,8 +30,11 @@ else:
 result = AggregationFlatten(
     query,
     response,
-    flat_one_hit = CONFIG.getboolean('misc', 'flat_one_hit', fallback=True),
-    plural_hits = CONFIG.getboolean('misc', 'plural_hits', fallback=True),
+    flat_top_hits = CONFIG.getboolean('misc', 'flat_top_hits', fallback=True),
+    plural_top_hits = CONFIG.getboolean('misc', 'plural_top_hits', fallback=True),
+    plurals = json.loads(CONFIG.get('misc', 'plurals', fallback='{}')),
+    date_format = CONFIG.get('misc', 'date_format', fallback=None),
+    timezone = CONFIG.get('misc', 'timezone', fallback=None),
     remove_keyword = CONFIG.getboolean('misc', 'remove_keyword', fallback=True),
 ).render(CONFIG.get('misc', 'output_mode', fallback='json'))
 

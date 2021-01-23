@@ -171,10 +171,16 @@ index = index-pattern-to-aggregate-*
 
 # These are the same keyword arguments offered on AggregationFlatten class.
 [misc]
-# top hits with size 1 will return as flatted value
-flat_one_hit = true
-# top hits with multiple hits will append a 's' to the field name
-plural_hits = true
+# top hits with size equal to 1 will return as flatted value
+flat_top_hits = true
+# top hits with size greater than 1 will came with the field name in plural form
+plural_top_hits = true
+# JSON object to override exceptions on plural forms
+plurals = {"gas": "gasses", "wolf": "wolves"}
+# Date format to output if a ISO8601 date is found
+date_format = %%d/%%m/%%Y %%H:%%M:%%S
+# Timezone to convert dates, if needed.
+timezone = America/Cuiaba
 # remove the '.keyword' suffix from the name fields
 remove_keyword = true
 # output format to stdout: json, pretty_json, csv
@@ -183,9 +189,9 @@ output_mode = pretty_json
 # Test Mode: Don't actually perform the query.
 # It just use the files below as inputs.
 [test]
-enabled = false              # choices: true, false
-query = qe1.json            # query file
-response = re1.json         # response file
+enabled = false
+query = qe1.json
+response = re1.json
 ```
 
 ## Disclaimer
