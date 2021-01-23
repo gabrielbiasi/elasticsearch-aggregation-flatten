@@ -178,7 +178,7 @@ plural_top_hits = true
 # JSON object to override exceptions on plural forms
 plurals = {"gas": "gasses", "wolf": "wolves"}
 # Date format to output if a ISO8601 date is found
-date_format = %%d/%%m/%%Y %%H:%%M:%%S
+date_format = %d/%m/%Y %H:%M:%S
 # Timezone to convert dates, if needed.
 timezone = America/Cuiaba
 # remove the '.keyword' suffix from the name fields

@@ -7,7 +7,7 @@ from aggregation_flatten import AggregationFlatten
 from aggregation_flatten.utils import execute_query, read_as_json
 
 
-CONFIG = configparser.ConfigParser()
+CONFIG = configparser.ConfigParser(interpolation=None)
 CONFIG.read(sys.argv[1])
 
 if CONFIG.getboolean('test', 'enabled', fallback=False):
