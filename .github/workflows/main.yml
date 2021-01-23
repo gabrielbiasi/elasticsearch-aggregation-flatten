@@ -1,0 +1,36 @@
+name: "Release Workflow"
+on:
+  workflow_dispatch:
+
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-n-publish:
+    name: Build and publish Python 🐍 distributions 📦 to PyPI
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@master
+
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+
+    - name: Build
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install setuptools wheel twine
+        pip install -r requirements.txt
+        python3 setup.py sdist
+
+    - name: Publish package to Test PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        repository_url: https://test.pypi.org/legacy/
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
