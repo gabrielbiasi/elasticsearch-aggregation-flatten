@@ -4,7 +4,7 @@ This python package helps to process an aggregation response from Elasticsearch 
 ## The Problem
 Elasticsearch is a amazing tool to perform almost any type of bucket and metric aggregations, but the Query DSL and the response provided by the API server is rather over complicated to work with.
 
-This problem scales up when multiple bucket aggragations are combined. For example, consider the following Query DSL with multiple bucket aggregations:
+This problem scales up when multiple bucket aggregations are combined. For example, consider the following Query DSL with multiple bucket aggregations:
 ```json
 {
   "size": 0,

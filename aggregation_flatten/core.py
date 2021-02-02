@@ -60,6 +60,7 @@ class AggregationFlatten(object):
 
     def process_data(self, subdata, agg_path):
         """Normalize the data of the bucket."""
+        data = None
         field_name, size = self.process_field(agg_path)
 
         if 'hits' in subdata.keys():  # top hits
@@ -86,7 +87,7 @@ class AggregationFlatten(object):
         if self.remove_keyword and '.keyword' in field_name:
             field_name = field_name.replace('.keyword', '')
 
-        return {field_name: data}
+        return {field_name: data} if data else {}
 
     def process_bucket(self, data, agg_path):
         """Here the magic happens.

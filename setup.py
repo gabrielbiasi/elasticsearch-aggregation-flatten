@@ -1,11 +1,11 @@
 import setuptools
 
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="elasticsearch-aggregation-flatten",
-    version="0.0.1",
+    version="0.0.2",
     author="Gabriel de Biasi",
     author_email="biasi131@gmail.com",
     description="This python package helps to process an aggregation response from Elasticsearch and output it as easy-to-use format, such as json and csv.",
