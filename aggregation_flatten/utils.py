@@ -1,8 +1,16 @@
 """package utils."""
+import sys
 import json
 
 from elasticsearch.connection import create_ssl_context
 from elasticsearch import Elasticsearch
+
+
+def is_str(s):
+    """String checker with python2 compatibility."""
+    if sys.version_info[0] >= 3:
+        return isinstance(s, str)
+    return isinstance(s, basestring)
 
 
 def pluralize(word, override):

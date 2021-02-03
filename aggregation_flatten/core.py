@@ -5,7 +5,7 @@ import sys
 import uuid
 
 from datetime import datetime
-from .utils import pluralize, to_csv
+from .utils import is_str, pluralize, to_csv
 
 ISO8601 = "%Y-%m-%dT%H:%M:%S.%fZ"
 
@@ -28,7 +28,7 @@ class AggregationFlatten(object):
 
     def process_date(self, value):
         """Helper to sanitize date values."""
-        if not isinstance(value, str):
+        if not is_str(value):
             return value
         try:
             date = datetime.strptime(value, ISO8601)
