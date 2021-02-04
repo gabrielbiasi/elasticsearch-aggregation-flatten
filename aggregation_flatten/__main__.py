@@ -18,8 +18,9 @@ else:
     # Perform the query and get the results.
     query = read_as_json(sys.argv[2])
     response = execute_query(
-        query,
-        hosts_list=CONFIG.get('elastic', 'hosts').split(','),
+        index = CONFIG.get('elastic', 'index'),
+        query = query,
+        hosts_list = CONFIG.get('elastic', 'hosts').split(','),
         user = CONFIG.get('elastic', 'user'),
         password = CONFIG.get('elastic', 'password'),
         ca_filepath = CONFIG.get('elastic', 'ca_filepath'),

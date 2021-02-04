@@ -50,11 +50,11 @@ def read_as_json(filename):
         return json.loads(file.read())
 
 
-def execute_query(query, hosts_list, user=None, password=None, ca_filepath=None):
+def execute_query(index, query, hosts_list, user=None, password=None, ca_filepath=None):
     """Helper function to perform a query to ES."""
     auth = (user, password,) if user and password else None
     # Create SSL Certificate context, if needed.
     ssl_context = create_ssl_context(cafile=ca_filepath) if ca_filepath else None
 
     es = Elasticsearch(hosts_list, http_auth=auth, ssl_context=ssl_context)
-    return es.search(query)
+    return es.search(index=index, body=query)
